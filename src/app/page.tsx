@@ -26,6 +26,16 @@ const categories: Record<string, string> = {
 };
 
 const tools = [
+  // ── Live ──
+  {
+    name: "PDF Tools",
+    icon: FileText,
+    description: "Merge, split, rotate, edit, and organize PDFs",
+    href: "/tools/pdf-tools",
+    category: "Document",
+    available: true,
+  },
+  // ── Coming soon ──
   {
     name: "JSON Visualizer",
     icon: Braces,
@@ -121,14 +131,6 @@ const tools = [
     href: "/tools/dead-links",
     category: "Internet",
     available: false,
-  },
-  {
-    name: "PDF Tools",
-    icon: FileText,
-    description: "Merge, split, rotate, compress, and convert PDFs",
-    href: "/tools/pdf-tools",
-    category: "Document",
-    available: true,
   },
 ];
 

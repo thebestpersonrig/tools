@@ -16,6 +16,7 @@ import {
   FileText,
   ArrowUp,
   ArrowDown,
+  PenLine,
 } from "lucide-react";
 
 type PdfFile = {
@@ -25,7 +26,7 @@ type PdfFile = {
   pageCount: number;
 };
 
-type Tab = "merge" | "split" | "rotate" | "organize";
+type Tab = "merge" | "split" | "rotate" | "organize" | "edit";
 
 export default function PdfTools() {
   const [activeTab, setActiveTab] = useState<Tab>("merge");
@@ -44,6 +45,16 @@ export default function PdfTools() {
 
   // Organize — pages to remove
   const [removePages, setRemovePages] = useState("");
+
+  // Edit options
+  const [editMode, setEditMode] = useState<"text" | "watermark">("text");
+  const [editText, setEditText] = useState("");
+  const [editFontSize, setEditFontSize] = useState(16);
+  const [editColor, setEditColor] = useState("#000000");
+  const [editPage, setEditPage] = useState("1");
+  const [editX, setEditX] = useState(50);
+  const [editY, setEditY] = useState(50);
+  const [watermarkOpacity, setWatermarkOpacity] = useState(0.15);
 
   const addFiles = useCallback(async (newFiles: File[]) => {
     const { PDFDocument } = await import("pdf-lib");
@@ -225,6 +236,53 @@ export default function PdfTools() {
     }
   };
 
+  const editPdf = async () => {
+    if (files.length === 0 || !editText.trim()) return;
+    setProcessing(true);
+    try {
+      const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+      const src = await PDFDocument.load(files[0].data);
+      const font = await src.embedFont(StandardFonts.Helvetica);
+      const total = src.getPageCount();
+
+      const hexToRgb = (hex: string) => {
+        const n = parseInt(hex.slice(1), 16);
+        return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255);
+      };
+
+      if (editMode === "watermark") {
+        for (let i = 0; i < total; i++) {
+          const page = src.getPage(i);
+          const { width, height } = page.getSize();
+          page.drawText(editText, {
+            x: width / 2 - (font.widthOfTextAtSize(editText, editFontSize) / 2),
+            y: height / 2,
+            size: editFontSize,
+            font,
+            color: hexToRgb(editColor),
+            opacity: watermarkOpacity,
+          });
+        }
+      } else {
+        const pageNum = Math.min(Math.max(1, Number(editPage) || 1), total);
+        const page = src.getPage(pageNum - 1);
+        const { height } = page.getSize();
+        page.drawText(editText, {
+          x: editX,
+          y: height - editY,
+          size: editFontSize,
+          font,
+          color: hexToRgb(editColor),
+        });
+      }
+
+      const bytes = await src.save();
+      downloadBlob(bytes, `edited-${files[0].name}`);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const totalPages = files.reduce((sum, f) => sum + f.pageCount, 0);
 
   const tabs: { id: Tab; label: string; icon: React.ComponentType<{ size: number }> }[] = [
@@ -232,6 +290,7 @@ export default function PdfTools() {
     { id: "split", label: "Split", icon: Scissors },
     { id: "rotate", label: "Rotate", icon: RotateCw },
     { id: "organize", label: "Organize", icon: Trash2 },
+    { id: "edit", label: "Edit", icon: PenLine },
   ];
 
   return (
@@ -453,6 +512,110 @@ export default function PdfTools() {
           </div>
         )}
 
+        {files.length > 0 && activeTab === "edit" && (
+          <div className="p-4 bg-[#141414] border border-[#222] rounded-xl mb-6 space-y-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditMode("text")}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  editMode === "text"
+                    ? "bg-blue-500/20 text-blue-400"
+                    : "text-neutral-500 hover:text-white"
+                }`}
+              >
+                Add Text
+              </button>
+              <button
+                onClick={() => setEditMode("watermark")}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  editMode === "watermark"
+                    ? "bg-blue-500/20 text-blue-400"
+                    : "text-neutral-500 hover:text-white"
+                }`}
+              >
+                Watermark
+              </button>
+            </div>
+            <input
+              type="text"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              placeholder={editMode === "watermark" ? "Watermark text" : "Text to add"}
+              className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-neutral-600 focus:border-blue-500 focus:outline-none"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-500">Size</span>
+                <input
+                  type="number"
+                  value={editFontSize}
+                  onChange={(e) => setEditFontSize(Number(e.target.value))}
+                  min={6}
+                  max={200}
+                  className="w-16 bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white text-center focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-neutral-500">Color</span>
+                <input
+                  type="color"
+                  value={editColor}
+                  onChange={(e) => setEditColor(e.target.value)}
+                  className="w-7 h-7 rounded cursor-pointer border border-[#444]"
+                />
+              </div>
+            </div>
+            {editMode === "text" && (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-500">Page</span>
+                  <input
+                    type="text"
+                    value={editPage}
+                    onChange={(e) => setEditPage(e.target.value)}
+                    className="w-12 bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white text-center focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-500">X</span>
+                  <input
+                    type="number"
+                    value={editX}
+                    onChange={(e) => setEditX(Number(e.target.value))}
+                    className="w-14 bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white text-center focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-neutral-500">Y</span>
+                  <input
+                    type="number"
+                    value={editY}
+                    onChange={(e) => setEditY(Number(e.target.value))}
+                    className="w-14 bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-white text-center focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+            {editMode === "watermark" && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-neutral-500 shrink-0">Opacity</span>
+                <input
+                  type="range"
+                  min={0.05}
+                  max={1}
+                  step={0.05}
+                  value={watermarkOpacity}
+                  onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
+                  className="flex-1"
+                />
+                <span className="text-xs text-neutral-400 w-8 text-right tabular-nums">
+                  {Math.round(watermarkOpacity * 100)}%
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Action button */}
         {files.length > 0 && (
           <button
@@ -461,11 +624,13 @@ export default function PdfTools() {
               else if (activeTab === "split") splitPdf();
               else if (activeTab === "rotate") rotatePdf();
               else if (activeTab === "organize") organizePdf();
+              else if (activeTab === "edit") editPdf();
             }}
             disabled={
               processing ||
               (activeTab === "merge" && files.length < 2) ||
-              (activeTab === "organize" && !removePages.trim())
+              (activeTab === "organize" && !removePages.trim()) ||
+              (activeTab === "edit" && !editText.trim())
             }
             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-colors"
           >
@@ -480,7 +645,11 @@ export default function PdfTools() {
                     : "Extract pages"
                   : activeTab === "rotate"
                     ? "Rotate & Download"
-                    : "Remove pages & Download"}
+                    : activeTab === "edit"
+                      ? editMode === "watermark"
+                        ? "Add Watermark & Download"
+                        : "Add Text & Download"
+                      : "Remove pages & Download"}
           </button>
         )}
       </div>
