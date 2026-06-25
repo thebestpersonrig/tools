@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Image,
   Braces,
   Code2,
   GitCompareArrows,
@@ -27,14 +26,6 @@ const categories: Record<string, string> = {
 };
 
 const tools = [
-  {
-    name: "Image Editor",
-    icon: Image,
-    description: "Add text, move objects, draw — easy and intuitive",
-    href: "/tools/image-editor",
-    category: "Media",
-    available: true,
-  },
   {
     name: "JSON Visualizer",
     icon: Braces,
@@ -150,11 +141,11 @@ export default function Home() {
         <div className="relative max-w-6xl mx-auto px-6 py-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-surface text-sm text-muted mb-6">
             <Sparkles size={14} className="text-accent" />
-            All tools run in your browser — your data stays private
+            All tools run in your browser — your data never leaves
           </div>
           <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-4">
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              ToolKit
+              Toolium
             </span>
           </h1>
           <p className="text-lg text-muted max-w-xl mx-auto">

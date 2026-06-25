@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ToolKit — Developer & Creator Tools",
+  title: "Toolium — Developer & Creator Tools",
   description:
     "A collection of beautiful, fast tools for developers and creators. All tools run in your browser.",
 };
