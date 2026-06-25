@@ -35,15 +35,15 @@ const tools = [
     category: "Document",
     available: true,
   },
-  // ── Coming soon ──
   {
     name: "JSON Visualizer",
     icon: Braces,
     description: "Paste JSON and explore it as an interactive tree or graph",
     href: "/tools/json-visualizer",
     category: "Developer",
-    available: false,
+    available: true,
   },
+  // ── Coming soon ──
   {
     name: "Regex Playground",
     icon: Code2,
