@@ -128,7 +128,7 @@ const tools = [
     description: "Merge, split, rotate, compress, and convert PDFs",
     href: "/tools/pdf-tools",
     category: "Document",
-    available: false,
+    available: true,
   },
 ];
 
@@ -143,15 +143,11 @@ export default function Home() {
             <Sparkles size={14} className="text-accent" />
             All tools run in your browser — your data never leaves
           </div>
-          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-4">
+          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight">
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Toolium
             </span>
           </h1>
-          <p className="text-lg text-muted max-w-xl mx-auto">
-            Beautiful, fast tools for developers and creators. No sign-up, no
-            uploads to servers, no nonsense.
-          </p>
         </div>
       </section>
 
